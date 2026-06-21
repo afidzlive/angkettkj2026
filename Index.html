@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+  :root{
+    --bg:#0a0e16; --panel:#101622; --panel2:#141b29; --border:#1f2a3d;
+    --cyan:#3fd8e8; --cyan2:#22c1d6; --blue:#6c7fe8; --text:#e8edf5; --muted:#8694ab;
+    --green:#3fe89a; --orange:#f5a86b; --red:#f56b6b;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',Inter,Arial,sans-serif;}
+  .hidden{display:none !important;}
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:#243149;border-radius:4px;}
+
+  /* ===== LOGIN ===== */
+  #loginScreen{min-height:100vh;display:flex;}
+  .login-left{flex:1.3;padding:60px;display:flex;flex-direction:column;justify-content:center;background:
+     radial-gradient(circle at 20% 20%, rgba(63,216,232,0.08), transparent 40%);}
+  .badge{display:inline-block;border:1px solid var(--cyan2);color:var(--cyan);font-size:12px;letter-spacing:1px;
+     padding:6px 14px;border-radius:20px;margin-bottom:20px;width:fit-content;}
+  .login-left h1{font-size:42px;margin:0 0 20px;line-height:1.2;}
+  .login-left h1 span{color:var(--cyan);}
+  .login-left p{color:var(--muted);max-width:480px;line-height:1.6;}
+  .hero-img{margin-top:30px;border-radius:16px;overflow:hidden;border:1px solid var(--border);max-width:520px;
+     box-shadow:0 0 60px rgba(63,216,232,0.12);}
+  .hero-img img{width:100%;display:block;}
+  .login-right{width:460px;background:var(--panel);padding:50px 40px;border-left:1px solid var(--border);
+     display:flex;flex-direction:column;justify-content:center;}
+  .school-row{display:flex;align-items:center;gap:12px;margin-bottom:30px;}
+  .school-icon{width:42px;height:42px;border-radius:10px;background:var(--blue);display:flex;align-items:center;
+     justify-content:center;font-size:20px;}
+  .school-row div h2{margin:0;font-size:18px;}
+  .school-row div small{color:var(--muted);letter-spacing:1px;}
+  .roleTabs{display:flex;background:#0d1320;border-radius:10px;padding:4px;margin-bottom:24px;}
+  .roleTab{flex:1;text-align:center;padding:10px;border-radius:8px;cursor:pointer;color:var(--muted);font-weight:600;
+     font-size:13px;letter-spacing:1px;}
+  .roleTab.active{background:var(--cyan);color:#06141a;}
+  label.fl{display:block;font-size:12px;color:var(--muted);letter-spacing:1px;margin:14px 0 6px;}
+  .input-wrap{position:relative;}
+  input.field{width:100%;padding:13px 14px;background:#0d1320;border:1px solid var(--border);border-radius:10px;
+     color:var(--text);font-size:14px;}
+  input.field:focus{outline:none;border-color:var(--cyan2);}
+  .btn-primary{width:100%;margin-top:22px;padding:14px;background:var(--cyan);border:none;border-radius:10px;
+     color:#06141a;font-weight:700;font-size:15px;cursor:pointer;}
+  .btn-primary:hover{background:var(--cyan2);}
+  .err-msg{color:var(--red);font-size:13px;margin-top:10px;min-height:18px;}
+  .foot-note{color:var(--muted);font-size:12px;margin-top:24px;text-align:center;}
+  .foot-note a{color:var(--cyan);text-decoration:none;}
+
+  @media(max-width:900px){
+    #loginScreen{flex-direction:column;}
+    .login-left{padding:30px;}
+    .login-left h1{font-size:30px;}
+    .login-right{width:100%;border-left:none;border-top:1px solid var(--border);}
+  }
+
+  /* ===== APP SHELL ===== */
+  #appShell{display:none;min-height:100vh;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid var(--border);
+     background:var(--panel);}
+  .topbar h3{margin:0;font-size:18px;}
+  .topbar .sub{color:var(--cyan);font-size:11px;letter-spacing:1px;}
+  .userchip{width:36px;height:36px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;
+     font-weight:700;cursor:pointer;}
+  .logoutBtn{margin-left:14px;color:var(--muted);cursor:pointer;font-size:13px;}
+
+  .layout{display:flex;}
+  .sidebar{width:230px;background:var(--panel);border-right:1px solid var(--border);min-height:calc(100vh - 73px);padding:18px 12px;}
+  .sidenav{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;color:var(--muted);
+     cursor:pointer;font-size:14px;margin-bottom:4px;}
+  .sidenav.active{background:rgba(63,216,232,0.12);color:var(--cyan);font-weight:600;}
+  .main{flex:1;padding:28px;max-width:1200px;}
+
+  @media(max-width:800px){
+    .layout{flex-direction:column;}
+    .sidebar{width:100%;display:flex;overflow-x:auto;gap:6px;min-height:auto;border-right:none;border-bottom:1px solid var(--border);}
+    .sidenav{white-space:nowrap;}
+    .main{padding:16px;}
+  }
+
+  /* ===== CARDS / SURVEY ===== */
+  .card{background:var(--panel2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:18px;}
+  .progress-bar-bg{height:8px;background:#0d1320;border-radius:4px;overflow:hidden;margin:10px 0;}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));}
+  .qcard{border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:14px;background:#0d1320;}
+  .qcard.active{border-color:var(--cyan2);}
+  .qcard .qtext{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+  .qnum{color:var(--cyan);font-size:12px;font-weight:700;}
+  .scale{display:flex;align-items:center;gap:8px;}
+  .scale span{color:var(--muted);font-size:12px;}
+  .scaleBtn{width:36px;height:36px;border-radius:8px;background:#1a2233;border:1px solid var(--border);color:var(--text);
+     cursor:pointer;font-weight:600;}
+  .scaleBtn.sel{background:var(--cyan);color:#06141a;border-color:var(--cyan);}
+  .choiceOpt{display:flex;align-items:center;gap:10px;padding:12px 16px;border:1px solid var(--border);border-radius:10px;
+     margin-bottom:10px;cursor:pointer;background:#0d1320;}
+  .choiceOpt.sel{border-color:var(--cyan);background:rgba(63,216,232,0.08);}
+  .navRow{display:flex;justify-content:space-between;margin-top:20px;gap:10px;flex-wrap:wrap;}
+  .btn-outline{padding:12px 20px;border:1px solid var(--cyan2);color:var(--cyan);background:transparent;border-radius:10px;
+     cursor:pointer;font-weight:600;}
+  .btn-fill{padding:12px 24px;border:none;background:var(--cyan);color:#06141a;border-radius:10px;cursor:pointer;font-weight:700;}
+  .btn-fill:disabled,.btn-outline:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* ===== ADMIN DASH ===== */
+  .statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:18px;}
+  .statcard{background:var(--panel2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+  .statcard .label{color:var(--muted);font-size:11px;letter-spacing:1px;}
+  .statcard .value{font-size:30px;font-weight:700;margin:6px 0;}
+  .quotaRow{margin-bottom:16px;}
+  .quotaRow .qlabel{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;}
+  table.resTable{width:100%;border-collapse:collapse;font-size:13px;}
+  table.resTable th{text-align:left;color:var(--muted);font-weight:600;padding:10px;border-bottom:1px solid var(--border);}
+  table.resTable td{padding:10px;border-bottom:1px solid var(--border);}
+  .pill{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;display:inline-block;}
+  .pill.Fiber{background:rgba(245,168,107,0.15);color:var(--orange);}
+  .pill.Network{background:rgba(108,127,232,0.18);color:#9aaaf5;}
+  .pill.Cloud{background:rgba(63,216,232,0.15);color:var(--cyan);}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;
+     border-radius:50%;animation:sp 0.7s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--panel2);border:1px solid var(--cyan2);color:var(--text);
+     padding:14px 20px;border-radius:10px;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.4);}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN SCREEN ===================== -->
+<div id="loginScreen">
+  <div class="login-left">
+    <div class="badge">● TJKT PORTAL</div>
+    <h1>Pemetaan Bakat Minat <span>TJKT 2026</span></h1>
+    <p>Sistem pemetaan minat & bakat untuk penempatan kelas X TJKT SMK Negeri 1 Bukateja —
+       Fiber Optic Technician, Network Engineer, dan Cloud Engineer.</p>
+    <div class="hero-img">
+      <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900&q=80" alt="network">
+    </div>
+  </div>
+  <div class="login-right">
+    <div class="school-row">
+      <div class="school-icon">🖧</div>
+      <div><h2>SMKN 1 Bukateja</h2><small>TEKNIK JARINGAN KOMPUTER & TELEKOMUNIKASI</small></div>
+    </div>
+    <div class="roleTabs">
+      <div class="roleTab active" id="tabSiswa" onclick="setRole('siswa')">SISWA</div>
+      <div class="roleTab" id="tabAdmin" onclick="setRole('admin')">ADMIN</div>
+    </div>
+    <label class="fl">NISN / USERNAME</label>
+    <div class="input-wrap"><input class="field" id="loginNisn" placeholder="Masukkan NISN / username"></div>
+    <label class="fl">PASSWORD</label>
+    <div class="input-wrap"><input class="field" type="password" id="loginPass" placeholder="Masukkan password"></div>
+    <button class="btn-primary" id="loginBtn" onclick="doLogin()">Masuk</button>
+    <div class="err-msg" id="loginErr"></div>
+    <div class="foot-note">Lupa password? Hubungi <a href="#">wali kelas</a> atau admin TJKT.</div>
+  </div>
+</div>
+
+<!-- ===================== APP SHELL ===================== -->
+<div id="appShell">
+  <div class="topbar">
+    <div>
+      <h3 id="topTitle">SMK Negeri 1 Bukateja</h3>
+      <div class="sub" id="topSub">TJKT PORTAL</div>
+    </div>
+    <div style="display:flex;align-items:center;">
+      <div class="userchip" id="userChip">A</div>
+      <div class="logoutBtn" onclick="logout()">Keluar</div>
+    </div>
+  </div>
+  <div class="layout">
+    <div class="sidebar" id="sidebar"></div>
+    <div class="main" id="main"></div>
+  </div>
+</div>
+
+<div id="toastBox"></div>
+
+<script>
+/* ===================== STATE ===================== */
+let currentUser = null;
+let activeRole = 'siswa';
+let surveyAnswers = {};
+let surveyChoices = {p1:null,p2:null,p3:null};
+let currentSection = 0;
+
+const SECTIONS = [
+  {key:'A', title:'Personality & Work Habits', range:[1,10], icon:'🧠'},
+  {key:'B', title:'Minat Teknis', range:[11,20], icon:'🔧'},
+  {key:'C', title:'Gaya Belajar', range:[21,28], icon:'📘'},
+  {key:'D', title:'Simulasi Situasi', range:[29,36], icon:'🧩'},
+  {key:'E', title:'Pilihan Langsung', range:null, icon:'✅'}
+];
+
+const QUESTIONS = {
+1:"Saya lebih suka bekerja langsung dengan alat daripada hanya teori",
+2:"Saya nyaman bekerja di luar ruangan atau berpindah tempat",
+3:"Saya teliti dalam mengerjakan sesuatu yang detail",
+4:"Saya suka mencari tahu penyebab suatu masalah",
+5:"Saya menikmati menyusun sesuatu secara sistematis",
+6:"Saya tetap tenang saat menghadapi masalah teknis",
+7:"Saya suka mencoba hal baru dalam teknologi",
+8:"Saya bisa fokus lama pada pekerjaan yang rumit",
+9:"Saya senang bekerja dalam tim",
+10:"Saya suka mempelajari teknologi terbaru secara mandiri",
+11:"Saya tertarik memasang kabel jaringan atau perangkat internet",
+12:"Saya suka melihat bagaimana jaringan internet bekerja",
+13:"Saya tertarik memperbaiki masalah koneksi internet",
+14:"Saya suka mengatur perangkat seperti router/switch",
+15:"Saya tertarik mempelajari server",
+16:"Saya suka membuat atau mengelola website/aplikasi",
+17:"Saya tertarik dengan virtual machine",
+18:"Saya ingin belajar cloud seperti AWS/GCP",
+19:"Saya tertarik dengan keamanan jaringan",
+20:"Saya suka belajar Linux",
+21:"Saya lebih cepat paham dengan praktik langsung",
+22:"Saya suka membaca diagram/topologi",
+23:"Saya suka memahami alur kerja sistem",
+24:"Saya suka eksperimen trial-error",
+25:"Saya suka menghafal langkah teknis",
+26:"Saya lebih suka menyelesaikan masalah sendiri dulu",
+27:"Saya suka tugas yang membutuhkan logika",
+28:"Saya suka tugas yang membutuhkan ketelitian tinggi",
+29:"Jika internet rumah bermasalah, saya tertarik mengecek kabel dan perangkat",
+30:"Saya suka mengatur WiFi agar lebih optimal",
+31:"Saya penasaran bagaimana data bisa tersimpan di cloud",
+32:"Saya tertarik belajar bagaimana ISP memasang jaringan rumah",
+33:"Saya suka melihat dashboard/server monitoring",
+34:"Saya tertarik membuat server sendiri",
+35:"Saya suka menganalisis jalur koneksi dari satu perangkat ke perangkat lain",
+36:"Saya tertarik belajar otomasi server/jaringan"
+};
+
+const TRACK_LABEL = {Fiber:'Fiber Optic Technician', Network:'Network Engineer', Cloud:'Cloud Engineer'};
+
+/* ===================== LOGIN ===================== */
+function setRole(r){
+  activeRole = r;
+  document.getElementById('tabSiswa').classList.toggle('active', r==='siswa');
+  document.getElementById('tabAdmin').classList.toggle('active', r==='admin');
+}
+
+function doLogin(){
+  const nisn = document.getElementById('loginNisn').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+  if(!nisn || !pass){ err.textContent='Mohon isi NISN dan password.'; return; }
+  btn.innerHTML = '<span class="spin"></span>';
+  google.script.run.withSuccessHandler(res=>{
+    btn.textContent='Masuk';
+    if(!res.success){ err.textContent = res.message; return; }
+    currentUser = res.user;
+    enterApp();
+  }).withFailureHandler(e=>{
+    btn.textContent='Masuk';
+    err.textContent = 'Terjadi kesalahan: '+e.message;
+  }).login(nisn, pass, activeRole);
+}
+
+function logout(){
+  currentUser = null;
+  document.getElementById('appShell').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginNisn').value='';
+  document.getElementById('loginPass').value='';
+}
+
+/* ===================== APP SHELL ===================== */
+function enterApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appShell').style.display='block';
+  document.getElementById('userChip').textContent = currentUser.nama.charAt(0).toUpperCase();
+  document.getElementById('topSub').textContent = currentUser.role==='admin' ? 'ADMIN PORTAL' : 'STUDENT PORTAL';
+
+  if(currentUser.role === 'admin'){
+    renderAdminSidebar();
+    loadAdminDashboard();
+  } else {
+    renderStudentSidebar();
+    loadStudentHome();
+  }
+}
+
+/* ===================== STUDENT ===================== */
+function renderStudentSidebar(){
+  document.getElementById('sidebar').innerHTML = `
+    <div class="sidenav active" onclick="loadStudentHome()">🏠 Dashboard</div>
+    <div class="sidenav" onclick="loadStudentResult()">📊 Hasil Saya</div>
+  `;
+}
+
+function loadStudentHome(){
+  setActiveSidenav(0);
+  document.getElementById('main').innerHTML = '<div class="card">Memuat status angket...</div>';
+  google.script.run.withSuccessHandler(status=>{
+    if(status.submitted){
+      renderStudentResultCard(status.result);
+    } else {
+      surveyAnswers = {}; surveyChoices = {p1:null,p2:null,p3:null}; currentSection = 0;
+      renderSurveyShell();
+    }
+  }).getStudentStatus(currentUser.nisn);
+}
+
+function loadStudentResult(){
+  setActiveSidenav(1);
+  document.getElementById('main').innerHTML = '<div class="card">Memuat hasil...</div>';
+  google.script.run.withSuccessHandler(status=>{
+    if(status.submitted) renderStudentResultCard(status.result);
+    else document.getElementById('main').innerHTML = '<div class="card">Anda belum mengisi angket.</div>';
+  }).getStudentStatus(currentUser.nisn);
+}
+
+function setActiveSidenav(idx){
+  document.querySelectorAll('#sidebar .sidenav').forEach((el,i)=> el.classList.toggle('active', i===idx));
+}
+
+function renderStudentResultCard(r){
+  const max = Math.max(r.skorFiber, r.skorNetwork, r.skorCloud);
+  document.getElementById('main').innerHTML = `
+    <div class="card">
+      <h2 style="margin-top:0">Hasil Pemetaan Minat & Bakat</h2>
+      <p style="color:var(--muted)">Disubmit: ${new Date(r.timestamp).toLocaleString('id-ID')}</p>
+      <div class="statgrid" style="margin-top:18px">
+        <div class="statcard"><div class="label">FIBER OPTIC</div><div class="value" style="color:var(--orange)">${r.skorFiber}</div></div>
+        <div class="statcard"><div class="label">NETWORK ENGINEER</div><div class="value" style="color:#9aaaf5">${r.skorNetwork}</div></div>
+        <div class="statcard"><div class="label">CLOUD ENGINEER</div><div class="value" style="color:var(--cyan)">${r.skorCloud}</div></div>
+      </div>
+      <div class="card" style="background:#0d1320;margin-top:10px">
+        <div style="color:var(--muted);font-size:12px;letter-spacing:1px">REKOMENDASI AWAL</div>
+        <div style="font-size:20px;font-weight:700;color:var(--cyan)">${TRACK_LABEL[r.rekomendasiAwal]||'-'}</div>
+      </div>
+      <div class="card" style="background:#0d1320">
+        <div style="color:var(--muted);font-size:12px;letter-spacing:1px">PENEMPATAN KELAS FINAL</div>
+        <div style="font-size:24px;font-weight:700">${r.kelasFinal ? (r.kelasFinal+' — '+TRACK_LABEL[r.kelasFinal]) : 'Menunggu proses admin'}</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:6px">Status: ${r.status}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ----- Survey Wizard ----- */
+function renderSurveyShell(){
+  const main = document.getElementById('main');
+  let navHtml = SECTIONS.map((s,i)=>`
+    <div class="sidenav ${i===currentSection?'active':''}" data-i="${i}" onclick="gotoSection(${i})">
+      ${s.icon} ${s.key}. ${s.title}
+    </div>`).join('');
+  document.getElementById('sidebar').innerHTML = navHtml;
+
+  main.innerHTML = `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0">Angket Pemetaan Minat & Bakat TJKT</h2>
+      <span style="color:var(--cyan);font-size:13px" id="progressTxt"></span>
+    </div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+  <div id="sectionBody"></div>`;
+  renderSection();
+}
+
+function gotoSection(i){
+  currentSection = i;
+  document.querySelectorAll('#sidebar .sidenav').forEach((el,idx)=>el.classList.toggle('active', idx===i));
+  renderSection();
+}
+
+function renderSection(){
+  const s = SECTIONS[currentSection];
+  document.getElementById('progressTxt').textContent = Math.round(((currentSection)/SECTIONS.length)*100)+'% selesai';
+  document.getElementById('progressFill').style.width = Math.round((currentSection/SECTIONS.length)*100)+'%';
+
+  let body = '';
+  if(s.range){
+    for(let q=s.range[0]; q<=s.range[1]; q++){
+      const sel = surveyAnswers[q];
+      body += `<div class="qcard ${sel?'active':''}">
+        <div class="qtext">
+          <div><span class="qnum">Q${q}</span><br>${QUESTIONS[q]}</div>
+          <div class="scale">
+            <span>Tdk Sesuai</span>
+            ${[1,2,3,4].map(v=>`<button class="scaleBtn ${sel==v?'sel':''}" onclick="setAnswer(${q},${v})">${v}</button>`).join('')}
+            <span>Sesuai</span>
+          </div>
+        </div>
+      </div>`;
+    }
+  } else {
+    const opts = [
+      {key:'p1', q:'Jika harus memilih sekarang, bidang mana yang paling ingin Anda pelajari?',
+        choices:[['Fiber','Fiber Optic Technician'],['Network','Network Engineer'],['Cloud','Cloud Engineer']]},
+      {key:'p2', q:'Pekerjaan mana yang paling menarik bagi Anda?',
+        choices:[['Fiber','Teknisi ISP Lapangan'],['Network','Administrator Jaringan'],['Cloud','Cloud Engineer / DevOps']]},
+      {key:'p3', q:'Aktivitas mana yang paling membuat Anda tertarik?',
+        choices:[['Fiber','Menyambung kabel fiber dan instalasi internet'],['Network','Mengatur router, IP, VLAN, firewall'],['Cloud','Membuat server, deploy website, virtualisasi']]}
+    ];
+    opts.forEach(o=>{
+      body += `<div class="qcard"><div style="margin-bottom:10px;font-weight:600">${o.q}</div>`;
+      o.choices.forEach(c=>{
+        const sel = surveyChoices[o.key]===c[0];
+        body += `<div class="choiceOpt ${sel?'sel':''}" onclick="setChoice('${o.key}','${c[0]}')">
+          <span>${sel?'🔵':'⚪'}</span><span>${c[1]}</span></div>`;
+      });
+      body += `</div>`;
+    });
+  }
+
+  const isLast = currentSection === SECTIONS.length-1;
+  body += `<div class="navRow">
+    <button class="btn-outline" onclick="prevSection()" ${currentSection===0?'disabled':''}>← Bagian Sebelumnya</button>
+    ${isLast
+      ? `<button class="btn-fill" id="submitBtn" onclick="submitSurvey()">Kirim Angket ✓</button>`
+      : `<button class="btn-fill" onclick="nextSection()">Simpan & Lanjut →</button>`}
+  </div>`;
+  document.getElementById('sectionBody').innerHTML = body;
+}
+
+function setAnswer(q,v){ surveyAnswers[q]=v; renderSection(); }
+function setChoice(key,val){ surveyChoices[key]=val; renderSection(); }
+
+function prevSection(){ if(currentSection>0){ currentSection--; gotoSection(currentSection);} }
+function nextSection(){
+  const s = SECTIONS[currentSection];
+  if(s.range){
+    for(let q=s.range[0]; q<=s.range[1]; q++){
+      if(!surveyAnswers[q]){ showToast('Mohon jawab semua pernyataan di bagian ini.'); return; }
+    }
+  }
+  if(currentSection < SECTIONS.length-1){ currentSection++; gotoSection(currentSection); }
+}
+
+function submitSurvey(){
+  if(!surveyChoices.p1 || !surveyChoices.p2 || !surveyChoices.p3){
+    showToast('Mohon lengkapi Bagian E (Pilihan Langsung).'); return;
+  }
+  for(let q=1;q<=36;q++){
+    if(!surveyAnswers[q]){ showToast('Ada pernyataan yang belum dijawab di Bagian A-D.'); return; }
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.innerHTML = '<span class="spin"></span> Mengirim...';
+  google.script.run.withSuccessHandler(res=>{
+    if(!res.success){ showToast(res.message); btn.textContent='Kirim Angket ✓'; return; }
+    showToast('Angket berhasil dikirim!');
+    renderStudentResultCard(res.result);
+    renderStudentSidebar();
+    setActiveSidenav(1);
+  }).withFailureHandler(e=>{
+    showToast('Gagal mengirim: '+e.message);
+    btn.textContent='Kirim Angket ✓';
+  }).submitAngket({nisn: currentUser.nisn, nama: currentUser.nama, answers: surveyAnswers, choices: surveyChoices});
+}
+
+/* ===================== ADMIN ===================== */
+function renderAdminSidebar(){
+  document.getElementById('sidebar').innerHTML = `
+    <div class="sidenav active" onclick="loadAdminDashboard()">📊 Dashboard</div>
+    <div class="sidenav" onclick="loadAdminResults()">🗂️ Hasil Penempatan</div>
+    <div class="sidenav" onclick="loadAdminStudents()">👥 Data Siswa</div>
+  `;
+}
+
+function loadAdminDashboard(){
+  setActiveSidenav(0);
+  document.getElementById('main').innerHTML = '<div class="card">Memuat statistik...</div>';
+  google.script.run.withSuccessHandler(stats=>{
+    const d = stats.distribution, q = stats.quota;
+    document.getElementById('main').innerHTML = `
+      <div class="toolbar">
+        <button class="btn-outline" onclick="rebalance()">🔄 Sync / Hitung Ulang Penempatan</button>
+        <button class="btn-fill" onclick="exportExcel()">⬇ Unduh Hasil (Excel)</button>
+      </div>
+      <div class="statgrid">
+        <div class="statcard"><div class="label">TOTAL SISWA</div><div class="value">${stats.totalStudents}</div></div>
+        <div class="statcard"><div class="label">ANGKET SELESAI</div><div class="value">${stats.completed}</div><div style="color:var(--green);font-size:12px">${stats.participationRate}% partisipasi</div></div>
+        <div class="statcard"><div class="label">DISTRIBUSI</div><div class="value" style="font-size:16px">F:${d.Fiber||0} N:${d.Network||0} C:${d.Cloud||0}</div></div>
+        <div class="statcard"><div class="label">PENDING</div><div class="value" style="color:var(--orange)">${stats.pending}</div></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Status Kuota Kelas</h3>
+        ${quotaBar('Kelas A (Fiber Optic)', d.Fiber||0, q.Fiber.max)}
+        ${quotaBar('Kelas B (Network Engineer)', d.Network||0, q.Network.max)}
+        ${quotaBar('Kelas C (Cloud Engineer)', d.Cloud||0, q.Cloud.max)}
+      </div>
+    `;
+  }).getAdminStats();
+}
+
+function quotaBar(label, val, max){
+  const pct = Math.min(100, Math.round((val/max)*100));
+  return `<div class="quotaRow">
+    <div class="qlabel"><span>${label}</span><span>${val} / ${max}</span></div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+  </div>`;
+}
+
+function rebalance(){
+  showToast('Menghitung ulang penempatan...');
+  google.script.run.withSuccessHandler(()=>{
+    showToast('Penempatan berhasil disinkronkan.');
+    loadAdminDashboard();
+  }).rebalanceAllPlacements();
+}
+
+function exportExcel(){
+  showToast('Menyiapkan file Excel...');
+  google.script.run.withSuccessHandler(res=>{
+    if(res.success){ window.open(res.url, '_blank'); showToast('File siap diunduh.'); }
+    else showToast('Gagal membuat file.');
+  }).exportResultsToExcel();
+}
+
+function loadAdminResults(){
+  setActiveSidenav(1);
+  document.getElementById('main').innerHTML = '<div class="card">Memuat data hasil...</div>';
+  google.script.run.withSuccessHandler(rows=>{
+    let trs = rows.map(r=>{
+      const max = Math.max(r.skorFiber||0, r.skorNetwork||0, r.skorCloud||0);
+      return `<tr>
+        <td>${r.nisn}</td><td>${r.nama}</td>
+        <td><span class="pill ${r.rekomendasiAwal}">${r.rekomendasiAwal||'-'}</span></td>
+        <td>${max}</td>
+        <td>${r.kelasFinal ? '🟢 '+r.kelasFinal : '🟠 Pending'}</td>
+        <td><button class="btn-outline" style="padding:6px 10px;font-size:12px" onclick="openOverride('${r.nisn}')">Override</button></td>
+      </tr>`;
+    }).join('');
+    document.getElementById('main').innerHTML = `
+      <div class="card">
+        <h2 style="margin-top:0">Tabel Hasil Penempatan (${rows.length} siswa)</h2>
+        <div style="overflow-x:auto">
+        <table class="resTable">
+          <thead><tr><th>NISN</th><th>Nama</th><th>Rekomendasi</th><th>Skor Tertinggi</th><th>Kelas Final</th><th>Aksi</th></tr></thead>
+          <tbody>${trs || '<tr><td colspan="6">Belum ada data.</td></tr>'}</tbody>
+        </table>
+        </div>
+      </div>`;
+  }).getAllResults();
+}
+
+function openOverride(nisn){
+  const cls = prompt('Masukkan kelas baru untuk NISN '+nisn+' (Fiber / Network / Cloud):');
+  if(!cls) return;
+  if(!['Fiber','Network','Cloud'].includes(cls)){ showToast('Input tidak valid.'); return; }
+  google.script.run.withSuccessHandler(res=>{
+    if(res.success){ showToast('Berhasil diubah.'); loadAdminResults(); }
+    else showToast(res.message);
+  }).manualOverridePlacement(nisn, cls);
+}
+
+function loadAdminStudents(){
+  setActiveSidenav(2);
+  document.getElementById('main').innerHTML = '<div class="card">Memuat data siswa...</div>';
+  google.script.run.withSuccessHandler(rows=>{
+    let trs = rows.map(r=>`<tr><td>${r.NISN}</td><td>${r.Nama}</td><td>${r.KelasAsal}</td><td>${r.Status}</td></tr>`).join('');
+    document.getElementById('main').innerHTML = `
+      <div class="card">
+        <h2 style="margin-top:0">Direktori Siswa (${rows.length})</h2>
+        <table class="resTable">
+          <thead><tr><th>NISN</th><th>Nama</th><th>Kelas Asal</th><th>Status</th></tr></thead>
+          <tbody>${trs || '<tr><td colspan="4">Belum ada data siswa.</td></tr>'}</tbody>
+        </table>
+      </div>`;
+  }).getStudentDirectory();
+}
+
+/* ===================== UTIL ===================== */
+function showToast(msg){
+  const box = document.getElementById('toastBox');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(()=> el.remove(), 3500);
+}
+</script>
+</body>
+</html>
